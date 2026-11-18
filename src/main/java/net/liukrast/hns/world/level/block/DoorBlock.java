@@ -1,5 +1,6 @@
 package net.liukrast.hns.world.level.block;
 
+import net.liukrast.hns.world.level.block.entity.DoorBlockEntity;
 import net.liukrast.multipart.block.AbstractFacingMultipartBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -46,6 +47,11 @@ public abstract class DoorBlock extends AbstractFacingMultipartBlock implements 
         registerDefaultState(defaultBlockState().setValue(OPEN, false).setValue(POWERED, false));
     }
 
+    @Override
+    public boolean hasControllerState() {
+        return true;
+    }
+
     //region Block Data
     @Override
     protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
@@ -58,8 +64,13 @@ public abstract class DoorBlock extends AbstractFacingMultipartBlock implements 
         builder.add(OPEN, POWERED);
     }
 
+    public DoorBlockEntity createDoorBE(BlockPos pos, BlockState state) {
+        return new DoorBlockEntity(pos, state);
+    }
+
     @Override
     public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        if(isControllerActive(state)) return createDoorBE(pos, state);
         return null;
     }
 
@@ -110,6 +121,5 @@ public abstract class DoorBlock extends AbstractFacingMultipartBlock implements 
         if(!neighborState.is(this)) return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
         return neighborState.setValue(FACING, state.getValue(FACING)).setValue(getPartsProperty(), state.getValue(getPartsProperty()));
     }
-
     //endregion
 }
