@@ -30,16 +30,12 @@ public class AnimatedDoorBlockEntity<A extends Enum<A> & Float2FloatFunction> ex
 
     public void setAnimation(A animation) {
         this.animation = animation;
-        if (level != null && !level.isClientSide) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
-        }
+        flashClient();
     }
 
     public void setSpeed(float speed) {
         this.speed = speed;
-        if (level != null && !level.isClientSide) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
-        }
+        flashClient();
     }
 
     @Override

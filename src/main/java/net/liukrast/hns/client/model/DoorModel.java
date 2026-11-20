@@ -3,6 +3,7 @@ package net.liukrast.hns.client.model;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.liukrast.hns.client.renderer.DoorRenderer;
+import net.liukrast.hns.world.level.block.BasicAnimationSet;
 import net.liukrast.hns.world.level.block.entity.AnimatedDoorBlockEntity;
 import net.liukrast.hns.world.level.block.entity.DoorBlockEntity;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -17,7 +18,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.function.Function;
 
-public interface DoorModel<T extends AnimatedDoorBlockEntity> {
+public interface DoorModel<T extends AnimatedDoorBlockEntity<?>> {
     void setupAnim(T blockEntity, float partialTick, float progress);
     void render(PoseStack poseStack, VertexConsumer consumer, int packedLight, int packedOverlay);
     ResourceLocation getTexture(T blockEntity);
@@ -25,7 +26,10 @@ public interface DoorModel<T extends AnimatedDoorBlockEntity> {
         return source.getBuffer(RenderType.entityCutoutNoCull(getTexture(be)));
     }
 
-    int animationDuration(T blockEntity);
+    default int animationDuration(T blockEntity) {
+        if(blockEntity.getAnimation().name().equals("VANILLA")) return 1;
+        return (int) (20 * blockEntity.getSpeed());
+    }
 
     default DoorRenderer<T> renderer(BlockEntityRendererProvider.Context ctx) {
         return new DoorRenderer<>(ctx, this);

@@ -13,7 +13,7 @@ import net.minecraft.world.phys.AABB;
 import org.lwjgl.system.NonnullDefault;
 
 @NonnullDefault
-public class DoorRenderer<T extends AnimatedDoorBlockEntity> implements BlockEntityRenderer<T> {
+public class DoorRenderer<T extends AnimatedDoorBlockEntity<?>> implements BlockEntityRenderer<T> {
 
     protected DoorModel<T> model;
 

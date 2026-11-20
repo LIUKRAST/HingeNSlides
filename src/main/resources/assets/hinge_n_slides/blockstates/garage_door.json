@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "hinge_n_slides:block/garage_door"
+    }
+  }
+}

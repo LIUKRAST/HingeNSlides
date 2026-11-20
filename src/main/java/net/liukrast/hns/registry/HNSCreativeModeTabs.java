@@ -18,6 +18,8 @@ public class HNSCreativeModeTabs {
                 .displayItems((pars, out) -> {
                     out.accept(HNSItems.WRENCH);
                     out.accept(HNSBlocks.GARAGE_DOOR);
+                    out.accept(HNSBlocks.BLAST_DOOR);
+                    out.accept(HNSBlocks.LARGE_SPRUCE_DOOR);
                 })
                 .build());
     }

@@ -23,9 +23,7 @@ public class GarageDoorBlockEntity extends AnimatedDoorBlockEntity<BasicAnimatio
 
     public void setTexture(GarageDoorTexture texture) {
         this.texture = texture;
-        if (level != null && !level.isClientSide) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
-        }
+        flashClient();
     }
 
     @Override

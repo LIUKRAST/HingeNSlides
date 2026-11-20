@@ -3,7 +3,6 @@ package net.liukrast.hns.client.model;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.liukrast.hns.HNSConstants;
-import net.liukrast.hns.world.level.block.BasicAnimationSet;
 import net.liukrast.hns.world.level.block.entity.GarageDoorBlockEntity;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -37,7 +36,7 @@ public class GarageDoorModel implements DoorModel<GarageDoorBlockEntity> {
                 .addBox(0,0,0,80,16,4),
                 PartPose.offset(-8, -8, -8));
         part.addOrReplaceChild("bottom", CubeListBuilder.create()
-                        .texOffs(0, 20)
+                        .texOffs(0, 40)
                         .addBox(0,0,0,80,16,4),
                 PartPose.offset(-8, 8, -8));
 
@@ -61,12 +60,6 @@ public class GarageDoorModel implements DoorModel<GarageDoorBlockEntity> {
         bottom.y = 8 - sec(e, 0, 1/3f)*16 - sec(e, 1/3f, 2/3f)*16;
         bottom.xRot = -sec(e, 2/3f, 1)*Mth.PI/2;
         bottom.z = -8 + sec(e, 2/3f, 1)*16;
-    }
-
-    @Override
-    public int animationDuration(GarageDoorBlockEntity blockEntity) {
-        if(blockEntity.getAnimation() == BasicAnimationSet.VANILLA) return 1;
-        return (int) (20 * blockEntity.getSpeed());
     }
 
     @Override

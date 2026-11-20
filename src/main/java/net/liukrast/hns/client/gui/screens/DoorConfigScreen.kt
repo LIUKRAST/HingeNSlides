@@ -1,11 +1,16 @@
 package net.liukrast.hns.client.gui.screens
 
 import gg.essential.elementa.UIComponent
+import gg.essential.elementa.components.UIContainer
+import gg.essential.elementa.constraints.CenterConstraint
 import gg.essential.elementa.dsl.*
 import net.liukrast.hns.HNSConstants
 import net.minecraft.core.BlockPos
 import net.minecraft.network.chat.Component
 import net.swzo.brass.ui.BrassAppScreen
+import net.swzo.brass.ui.Colors
+import net.swzo.brass.ui.component.BrassText
+import net.swzo.brass.ui.kit.base.proxiedBy
 import net.swzo.brass.ui.kit.input.BrassCheckbox
 import net.swzo.brass.ui.kit.input.BrassDropdown
 import net.swzo.brass.ui.kit.input.BrassSlider
@@ -13,13 +18,13 @@ import net.swzo.brass.ui.kit.layout.*
 import net.swzo.brass.ui.kit.media.BrassIcons
 import net.swzo.brass.ui.kit.net.BrassNet
 import net.swzo.brass.ui.kit.net.payloadAs
-import java.awt.Color
+import net.swzo.brass.ui.kit.surface.BrassEmptyState
 
 class DoorConfigScreen(pos: BlockPos) : BrassAppScreen(
     title = Component.translatable("screen.${HNSConstants.MOD_ID}.door_config").string,
     maxWidth = 430f,
     maxHeight = 270f,
-    backdrop = Color(0, 0, 0, 72),
+    backdrop = Colors.withAlpha(Colors.SCRIM, 72),
 ) {
     private val doorPos = DoorPos.of(pos)
 
@@ -40,6 +45,10 @@ class DoorConfigScreen(pos: BlockPos) : BrassAppScreen(
     private fun refresh() {
         BrassNet.send(DoorActions.query, doorPos) { result ->
             val snap = if (result.ok) result.payloadAs(DoorSnapshot::class.java) else null
+            if (snap == null && !built) {
+                built = true
+                fill(BrassEmptyState(BrassIcons.DOOR, Component.translatableWithFallback("door.error.title", "Can't configure this door").string, result.message)) childOf body
+            }
             snap?.let {
                 if (!built) {
                     built = true
@@ -115,7 +124,7 @@ class DoorConfigScreen(pos: BlockPos) : BrassAppScreen(
                 is Boolean -> {
                     val box = BrassCheckbox(initial = value) { v -> update(key, v) }
                     checkboxes.getOrPut(key) { mutableListOf() }.add(box)
-                    form.addRow(translate(key), 18, box)
+                    form.add(checkRow(translate(key), box))
                 }
 
                 is String if options[key] != null -> {
@@ -129,7 +138,7 @@ class DoorConfigScreen(pos: BlockPos) : BrassAppScreen(
                     val range = ranges.getValue(key)
                     var pending = value.toFloat()
                     var dirty = false
-                    val slider = BrassSlider(range.min, range.max, pending, format = { fmt(it, range.step) }) { v ->
+                    val slider = BrassSlider(range.min, range.max, pending, range.step, format = { fmt(it, range.step) }) { v ->
                         pending = v
                         dirty = true
                     }
@@ -139,12 +148,23 @@ class DoorConfigScreen(pos: BlockPos) : BrassAppScreen(
                             update(key, pending)
                         }
                     }
+                    slider.constrain { height = 20.pixels() }
                     sliders.getOrPut(key) { mutableListOf() }.add(slider)
                     form.addField(translate(key), slider)
                 }
             }
         }
         return form
+    }
+
+    private fun checkRow(label: String, box: BrassCheckbox): UIContainer {
+        val row = UIContainer().constrain { height = CHECK_SIZE.pixels() }
+        box.constrain { x = 0.pixels(); y = CenterConstraint(); width = CHECK_SIZE.pixels(); height = CHECK_SIZE.pixels() } childOf row
+        val caption = BrassText.body(label, Colors.UI_TEXT_DARK).constrain {
+            x = (CHECK_SIZE + 5f).pixels(); y = CenterConstraint()
+        }.fitWidth() childOf row
+        box.proxiedBy(caption)
+        return row
     }
 
     private fun <T : UIComponent> fill(c: T): T =
@@ -168,5 +188,6 @@ class DoorConfigScreen(pos: BlockPos) : BrassAppScreen(
 
     private companion object {
         const val RAIL_GAP = 12f
+        const val CHECK_SIZE = 13f
     }
 }

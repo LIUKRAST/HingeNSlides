@@ -32,6 +32,7 @@ public class DoorBlockEntity extends BlockEntity {
 
     public void setManual(boolean manual) {
         this.manual = manual;
+        flashClient();
     }
     public void setRedstone(boolean redstone) {
         this.redstone = redstone;
@@ -42,6 +43,11 @@ public class DoorBlockEntity extends BlockEntity {
     }
     public boolean isRedstone() {
         return redstone;
+    }
+
+    public void flashClient() {
+        if (level != null && !level.isClientSide)
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
     }
 
     @Override
