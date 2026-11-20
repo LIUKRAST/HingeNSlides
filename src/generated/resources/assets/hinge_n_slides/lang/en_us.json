@@ -1,0 +1,19 @@
+{
+  "block.hinge_n_slides.garage_door": "Garage Door",
+  "door.category.general": "General",
+  "door.category.overview": "Overview",
+  "door.category.visual": "Visual",
+  "door.property.animation": "Animation Type",
+  "door.property.animation.normal": "Normal",
+  "door.property.animation.slam": "Slam",
+  "door.property.animation.vanilla": "Vanilla",
+  "door.property.animation_speed": "Animation speed",
+  "door.property.manual": "Manual Interaction",
+  "door.property.redstone": "Redstone enable",
+  "door.property.texture": "Texture",
+  "door.property.texture.connected": "Connected",
+  "door.property.texture.normal": "Normal",
+  "item.hinge_n_slides.wrench": "Wrench",
+  "itemGroup.hinge_n_slides": "Hinge & Slides",
+  "screen.hinge_n_slides.door_config": "Door Configuration"
+}

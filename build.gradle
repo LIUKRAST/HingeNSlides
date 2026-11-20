@@ -3,6 +3,7 @@ plugins {
     id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.141'
     id 'idea'
+    id 'org.jetbrains.kotlin.jvm'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -19,9 +20,12 @@ repositories {
     maven { url = "https://cursemaven.com"}
     maven { url = "https://maven.liukrast.net"} //Deployer
     maven { url = "https://api.modrinth.com/maven" }
+    maven { url = "https://maven.opnsoc.org/releases" }
+    maven { url = 'https://thedarkcolour.github.io/KotlinForForge/' }
     flatDir {
         dirs 'libs'
     }
+    mavenCentral()
 }
 
 base {
@@ -91,6 +95,9 @@ dependencies {
     implementation fileTree(dir: "${rootDir}/libs", include: ['*.jar'])
 
     jarJar(implementation("net.liukrast:multipart_api-1.21.1:${multipart_api_version}"))
+    jarJar(implementation("net.swzo.brass:brassui:${brassui_version}"))
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
+    implementation 'thedarkcolour:kotlinforforge-neoforge:5.12.0'
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
@@ -137,4 +144,7 @@ idea {
         downloadSources = true
         downloadJavadoc = true
     }
+}
+kotlin {
+    jvmToolchain(21)
 }

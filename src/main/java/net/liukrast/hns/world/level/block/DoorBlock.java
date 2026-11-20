@@ -1,5 +1,6 @@
 package net.liukrast.hns.world.level.block;
 
+import net.liukrast.hns.registry.HNSItems;
 import net.liukrast.hns.world.level.block.entity.DoorBlockEntity;
 import net.liukrast.multipart.block.AbstractFacingMultipartBlock;
 import net.minecraft.core.BlockPos;
@@ -30,21 +31,103 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.system.NonnullDefault;
 
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 @NonnullDefault
-public abstract class DoorBlock extends AbstractFacingMultipartBlock implements EntityBlock, LiquidBlockContainer {
+public abstract class DoorBlock<T extends DoorBlockEntity> extends AbstractFacingMultipartBlock implements EntityBlock, LiquidBlockContainer {
     public static final BooleanProperty OPEN = BlockStateProperties.OPEN;
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
-    private final boolean manual;
-    private final boolean redstone;
+    protected final DoorProperty<T, Boolean> manual;
+    protected final DoorProperty<T, Boolean> redstone;
 
     public DoorBlock(Properties properties, boolean manual, boolean redstone) {
         super(properties);
-        this.manual = manual;
-        this.redstone = redstone;
         registerDefaultState(defaultBlockState().setValue(OPEN, false).setValue(POWERED, false));
+        this.manual = createProperty("manual", manual, DoorBlockEntity::isManual, DoorBlockEntity::setManual);
+        this.redstone = createProperty("redstone", redstone, DoorBlockEntity::isRedstone, DoorBlockEntity::setRedstone);
+    }
+
+    public <V> DoorProperty<T, V> createProperty(String key, V defaultValue, Function<T, V> get, BiConsumer<T, V> set) {
+        return createProperty(key, DoorProperty.GENERAL, defaultValue, get, set);
+    }
+
+    public <V> DoorProperty<T, V> createProperty(String key, String category, V defaultValue, Function<T, V> get, BiConsumer<T, V> set) {
+        return new DoorProperty<>(key, category, getBlockEntityClass(), defaultValue, get, set, null);
+    }
+
+    public <V extends Number> DoorProperty<T, V> createProperty(String key, String category, V defaultValue,
+                                                                float min, float max, float step, Function<T, V> get, BiConsumer<T, V> set) {
+        return new DoorProperty<>(key, category, getBlockEntityClass(), defaultValue, get, set,
+                new DoorProperty.Range(min, max, step));
+    }
+
+    public Map<String, DoorProperty.Range> fetchRanges() {
+        Map<String, DoorProperty.Range> ranges = new LinkedHashMap<>();
+        for (DoorProperty<T, ?> p : getDoorProperties()) {
+            if (p.isConfigurable() && p.range() != null) ranges.put(p.key(), p.range());
+        }
+        return ranges;
+    }
+
+    public Map<String, Object> fetchData(Level level, BlockPos pos) {
+        BlockPos ctrl = getControllerPos(pos, level.getBlockState(pos));
+        Map<String, Object> data = new LinkedHashMap<>();
+        for (DoorProperty<T, ?> p : getDoorProperties()) {
+            if (!p.isConfigurable()) continue;
+            data.put(p.key(), DoorProperty.serialize(p.fetch(level, ctrl)));
+        }
+        return data;
+    }
+
+    public Map<String, String> fetchCategories() {
+        Map<String, String> categories = new LinkedHashMap<>();
+        for (DoorProperty<T, ?> p : getDoorProperties()) {
+            if (p.isConfigurable()) categories.put(p.key(), p.category());
+        }
+        return categories;
+    }
+
+    public Map<String, List<String>> fetchSchema() {
+        Map<String, List<String>> schema = new LinkedHashMap<>();
+        for (DoorProperty<T, ?> p : getDoorProperties()) {
+            if (p.isEnum() && p.isConfigurable()) schema.put(p.key(), p.options());
+        }
+        return schema;
+    }
+
+    public boolean updateData(Level level, BlockPos pos, Map<String, Object> values) {
+        Map<String, DoorProperty<T, ?>> byKey = new HashMap<>();
+        for(DoorProperty<T, ?> p : getDoorProperties()) byKey.put(p.key(), p);
+        if(!byKey.keySet().containsAll(values.keySet())) return false;
+
+        BlockPos ctrl = getControllerPos(pos, level.getBlockState(pos));
+        setControllerActive(level, ctrl, true);
+        var be = level.getBlockEntity(ctrl);
+        if(!getBlockEntityClass().isInstance(be)) return false;
+
+        boolean ok = true;
+        for(var e : values.entrySet()) ok &= byKey.get(e.getKey()).apply(level, ctrl, e.getValue());
+        be.setChanged();
+
+        pruneIfDefault(level, ctrl);
+        return ok;
+    }
+
+    private void pruneIfDefault(Level level, BlockPos ctrl) {
+        if(!hasControllerState()) return;
+        for (DoorProperty<T, ?> p : getDoorProperties()) {
+            if (!p.isDefault(level, ctrl)) return;
+        }
+        setControllerActive(level, ctrl, false);
+        level.removeBlockEntity(ctrl);
+    }
+
+    public List<DoorProperty<T, ?>> getDoorProperties() {
+        return List.of(manual, redstone);
     }
 
     @Override
@@ -64,14 +147,16 @@ public abstract class DoorBlock extends AbstractFacingMultipartBlock implements 
         builder.add(OPEN, POWERED);
     }
 
-    public DoorBlockEntity createDoorBE(BlockPos pos, BlockState state) {
-        return new DoorBlockEntity(pos, state);
-    }
+    public abstract Class<T> getBlockEntityClass();
+    public abstract T createDoorBE(BlockPos pos, BlockState state);
 
     @Override
     public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        if(isControllerActive(state)) return createDoorBE(pos, state);
-        return null;
+        DoorBlockEntity be = null;
+        if(isControllerActive(state)) be = createDoorBE(pos, state);
+        else if(!hasControllerState() && state.getValue(getPartsProperty()) == 0) be = createDoorBE(pos, state);
+        if(be != null) for (DoorProperty<T, ?> p : getDoorProperties()) p.applyDefault(be);
+        return be;
     }
 
     @Override
@@ -97,7 +182,9 @@ public abstract class DoorBlock extends AbstractFacingMultipartBlock implements 
     //region Behaviour
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
-        if(!manual) return super.useItemOn(stack, state, level, pos, player, hand, hitResult);
+        BlockPos ctrl = getControllerPos(pos, state);
+        if(stack.is(HNSItems.WRENCH)) return super.useItemOn(stack, state, level, pos, player, hand, hitResult);
+        if(!manual.fetch(level, ctrl)) return super.useItemOn(stack, state, level, pos, player, hand, hitResult);
         level.gameEvent(player, state.getValue(OPEN) ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, pos);
         level.setBlock(pos, state.cycle(OPEN), 10);
         return ItemInteractionResult.SUCCESS;
@@ -106,7 +193,7 @@ public abstract class DoorBlock extends AbstractFacingMultipartBlock implements 
     @Override
     protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
         super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
-        if(!redstone) return;
+        if(!redstone.fetch(level, getControllerPos(pos, state))) return;
         AtomicBoolean flag = new AtomicBoolean(false);
         forEachElement(pos, state, pos1 -> flag.set(flag.get() | level.hasNeighborSignal(pos1)));
         if(this == neighborBlock || flag.get() == state.getValue(POWERED)) return;
