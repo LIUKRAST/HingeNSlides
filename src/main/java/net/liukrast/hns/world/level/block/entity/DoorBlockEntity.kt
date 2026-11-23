@@ -1,76 +1,58 @@
-package net.liukrast.hns.world.level.block.entity;
+package net.liukrast.hns.world.level.block.entity
 
-import net.liukrast.hns.registry.HNSBlockEntityTypes;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.state.BlockState;
-import org.lwjgl.system.NonnullDefault;
+import net.liukrast.blocknet.setting.*
+import net.liukrast.hns.world.level.block.BasicAnimationSet
+import net.liukrast.hns.world.level.block.entity.setting.KeySetting
+import net.liukrast.hns.world.level.block.entity.setting.RedstoneSetting
+import net.minecraft.core.BlockPos
+import net.minecraft.core.HolderLookup
+import net.minecraft.nbt.CompoundTag
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket
+import net.minecraft.world.level.block.Block
+import net.minecraft.world.level.block.entity.BlockEntity
+import net.minecraft.world.level.block.entity.BlockEntityType
+import net.minecraft.world.level.block.state.BlockState
 
-@NonnullDefault
-public class DoorBlockEntity extends BlockEntity {
+open class DoorBlockEntity(
+    type: BlockEntityType<*>,
+    pos: BlockPos,
+    blockState: BlockState,
+    manual: Boolean,
+    redstone: Boolean,
+    speed: Float
+) : BlockEntity(type, pos, blockState), BlockNetConfigurable {
 
-    // Client data
-    public boolean lastState = false;
-    public long lastStateTime = -1;
+    var lastState = false
+    var lastStateTime = -1L
 
-    private boolean manual;
-    private boolean redstone;
+    protected val data = BlockNetData()
+    val manual by data.setting("manual", manual) { g, s  -> BooleanSetting("behaviour", g, s) }
+    val redstone by data.setting("redstone", redstone) { g, s  -> RedstoneSetting("behaviour", g, s) }
+    val key by data.setting("key", KeySetting.NONE) { g, s -> KeySetting("security", g, s) }
 
-    public DoorBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
-        super(type, pos, state);
+    val animationDuration by data.setting("animation_duration", speed) { g, s -> FloatSetting("visual", 0f, 10f, 0.25f, g, s) }
+    val animation by data.setting("animation", BasicAnimationSet.NORMAL) { g, s -> EnumSetting("visual", BasicAnimationSet::class, g, s) }
+
+    override fun getSettings(): Map<String, BlockNetSetting<*>> = data.settings()
+
+    override fun onSettingsChanged() {
+        setChanged()
+        val level = level ?: return
+        if(!level.isClientSide)
+            level.sendBlockUpdated(blockPos, blockState, blockState, Block.UPDATE_CLIENTS)
     }
 
-    public DoorBlockEntity(BlockPos pos, BlockState state) {
-        this(HNSBlockEntityTypes.DOOR.get(), pos, state);
+    override fun getUpdateTag(registries: HolderLookup.Provider): CompoundTag = saveWithoutMetadata(registries)
+
+    override fun getUpdatePacket(): ClientboundBlockEntityDataPacket = ClientboundBlockEntityDataPacket.create(this)
+
+    override fun saveAdditional(tag: CompoundTag, registries: HolderLookup.Provider) {
+        super.saveAdditional(tag, registries)
+        data.save(tag)
     }
 
-    public void setManual(boolean manual) {
-        this.manual = manual;
-        flashClient();
-    }
-    public void setRedstone(boolean redstone) {
-        this.redstone = redstone;
-    }
-
-    public boolean isManual() {
-        return manual;
-    }
-    public boolean isRedstone() {
-        return redstone;
-    }
-
-    public void flashClient() {
-        if (level != null && !level.isClientSide)
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
-    }
-
-    @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.putBoolean("Manual", manual);
-        tag.putBoolean("Redstone", redstone);
-    }
-
-    @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        manual = tag.getBoolean("Manual");
-        redstone = tag.getBoolean("Redstone");
-    }
-
-    @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        return saveWithoutMetadata(registries);
-    }
-
-    @Override
-    public Packet<ClientGamePacketListener> getUpdatePacket() {
-        return ClientboundBlockEntityDataPacket.create(this);
+    override fun loadAdditional(tag: CompoundTag, registries: HolderLookup.Provider) {
+        super.loadAdditional(tag, registries)
+        data.load(tag)
     }
 }

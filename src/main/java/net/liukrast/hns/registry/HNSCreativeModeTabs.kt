@@ -1,32 +1,33 @@
-package net.liukrast.hns.registry;
+package net.liukrast.hns.registry
 
-import net.liukrast.hns.HNSConstants;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.CreativeModeTab;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.registries.DeferredRegister;
+import net.liukrast.blocknet.registry.BlockNetItems
+import net.liukrast.hns.HNSConstants
+import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.network.chat.Component
+import net.minecraft.world.item.CreativeModeTab
+import net.neoforged.bus.api.IEventBus
+import net.neoforged.neoforge.registries.DeferredRegister
 
-public class HNSCreativeModeTabs {
+object HNSCreativeModeTabs {
+    private val REGISTER = DeferredRegister.create(BuiltInRegistries.CREATIVE_MODE_TAB, HNSConstants.MOD_ID)
 
-    private static final DeferredRegister<CreativeModeTab> REGISTER = DeferredRegister.create(BuiltInRegistries.CREATIVE_MODE_TAB, HNSConstants.MOD_ID);
+    init {
+        REGISTER.register("main_tab") { -> CreativeModeTab.builder()
+            .title(Component.translatable("itemGroup.${HNSConstants.MOD_ID}"))
+            .icon(HNSBlocks.LARGE_SPRUCE_DOOR.asItem()::getDefaultInstance)
+            .displayItems { _, out ->
+                out.accept(HNSBlocks.LARGE_SPRUCE_DOOR)
+                out.accept(HNSBlocks.LARGE_IRON_DOOR)
 
-    static {
-        REGISTER.register("main_tab", () -> CreativeModeTab.builder()
-                .title(Component.translatable("itemGroup." + HNSConstants.MOD_ID))
-                .icon(HNSItems.WRENCH.get()::getDefaultInstance)
-                .displayItems((pars, out) -> {
-                    out.accept(HNSItems.WRENCH);
-                    out.accept(HNSBlocks.GARAGE_DOOR);
-                    out.accept(HNSBlocks.BLAST_DOOR);
-                    out.accept(HNSBlocks.LARGE_SPRUCE_DOOR);
-                })
-                .build());
+                out.accept(HNSBlocks.GARAGE_DOOR)
+                out.accept(HNSBlocks.BLAST_DOOR)
+                out.accept(HNSItems.KEY)
+                out.accept(BlockNetItems.WRENCH)
+            }
+            .build() }
     }
 
-    private HNSCreativeModeTabs() {}
-
-    public static void init(IEventBus bus) {
-        REGISTER.register(bus);
+    fun init(bus: IEventBus) {
+        REGISTER.register(bus)
     }
 }

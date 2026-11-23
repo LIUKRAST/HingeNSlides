@@ -1,3 +1,5 @@
-// 1.21.1	2026-11-20T06:14:24.154839227	Item Models: hinge_n_slides
-281ccba79274de130ccfca5d167a278de1c4f2a7 assets/hinge_n_slides/models/item/garage_door.json
-f314ce0967113e9de3f5c9985c71fdd448e7ad69 assets/hinge_n_slides/models/item/wrench.json
+// 1.21.1	2026-11-23T23:53:44.085698264	Item Models: hinge_n_slides
+18db6361df2f5d913b40187b7762d520bca7350f assets/hinge_n_slides/models/item/blast_door.json
+19914bfee1e6d19b24a564431cea0d3e9c754623 assets/hinge_n_slides/models/item/garage_door.json
+249848984d263c90efadbf112735978dfc5304ab assets/hinge_n_slides/models/item/key.json
+6a80d5595e99ee556ef3c6dee05aade9fe921765 assets/hinge_n_slides/models/item/large_spruce_door.json

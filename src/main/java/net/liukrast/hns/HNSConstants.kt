@@ -1,15 +1,16 @@
-package net.liukrast.hns;
+package net.liukrast.hns
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.Registry
+import net.minecraft.resources.ResourceLocation
 
-public class HNSConstants {
+object HNSConstants {
+    const val MOD_ID = "hinge_n_slides"
+    @JvmStatic
+    fun id(path: String): ResourceLocation = ResourceLocation.fromNamespaceAndPath(MOD_ID, path)
 
-    public static final String MOD_ID = "hinge_n_slides";
-    public static final String PROTOCOL_VERSION = "1.0";
-
-    public static ResourceLocation id(String path) {
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+    fun <T> getRegistryEntries(registry: Registry<T>): Map<String, T> {
+        return registry.entrySet()
+            .filter { it.key.location().namespace == MOD_ID }
+            .associate { it.key.location().path to it.value }
     }
-
-    private HNSConstants() {}
 }

@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "hinge_n_slides:block/garage_door_particle"
+    "layer0": "hinge_n_slides:item/garage_door"
   }
 }

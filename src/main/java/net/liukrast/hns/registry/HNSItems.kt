@@ -1,20 +1,16 @@
-package net.liukrast.hns.registry;
+package net.liukrast.hns.registry
 
-import net.liukrast.hns.HNSConstants;
-import net.liukrast.hns.world.level.item.WrenchItem;
-import net.minecraft.world.item.Item;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.registries.DeferredItem;
-import net.neoforged.neoforge.registries.DeferredRegister;
+import net.liukrast.hns.HNSConstants
+import net.liukrast.hns.world.level.item.KeyItem
+import net.minecraft.world.item.Item
+import net.neoforged.bus.api.IEventBus
+import net.neoforged.neoforge.registries.DeferredItem
+import net.neoforged.neoforge.registries.DeferredRegister
 
-public class HNSItems {
-    private static final DeferredRegister.Items REGISTER = DeferredRegister.createItems(HNSConstants.MOD_ID);
+object HNSItems {
+    private val REGISTER = DeferredRegister.createItems(HNSConstants.MOD_ID)
 
-    public static final DeferredItem<Item> WRENCH = REGISTER.register("wrench", () -> new WrenchItem(new Item.Properties()));
+    val KEY: DeferredItem<KeyItem> = REGISTER.register("key") { -> KeyItem(1, Item.Properties()) }
 
-    private HNSItems() {}
-
-    public static void init(IEventBus bus) {
-        REGISTER.register(bus);
-    }
+    fun init(bus : IEventBus) = REGISTER.register(bus)
 }

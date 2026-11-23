@@ -1,43 +1,33 @@
-package net.liukrast.hns.world.level.block;
+package net.liukrast.hns.world.level.block
 
-import net.liukrast.hns.world.level.block.entity.BlastDoorBlockEntity;
-import net.liukrast.hns.world.level.block.shape.HRShape;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.VoxelShape;
-import org.lwjgl.system.NonnullDefault;
+import net.liukrast.hns.world.level.block.entity.BlastDoorBlockEntity
+import net.liukrast.hns.world.level.block.shape.HRShape
+import net.minecraft.core.BlockPos
+import net.minecraft.sounds.SoundEvent
+import net.minecraft.sounds.SoundEvents
+import net.minecraft.world.level.BlockGetter
+import net.minecraft.world.level.block.entity.BlockEntity
+import net.minecraft.world.level.block.state.BlockState
+import net.minecraft.world.phys.shapes.CollisionContext
+import net.minecraft.world.phys.shapes.VoxelShape
 
-@NonnullDefault
-public class BlastDoorBlock extends AnimatedDoorBlock<BlastDoorBlockEntity, BasicAnimationSet> {
-    private static final HRShape SHAPE = new HRShape(box(0,0,0,16,16,7));
-
-    public BlastDoorBlock(Properties properties) {
-        super(properties, false, true, BasicAnimationSet.NORMAL, 5);
+class BlastDoorBlock(properties: Properties) : DoorBlock(properties) {
+    companion object {
+        private val SHAPE = HRShape(box(0.0, 0.0, 0.0, 16.0, 16.0, 7.0))
     }
 
-    @Override
-    public Class<BlastDoorBlockEntity> getBlockEntityClass() {
-        return BlastDoorBlockEntity.class;
+    override fun defineParts(builder: Builder) {
+        builder.apply { repeat(6) { x -> repeat(3) { y -> define(x,y,0) } } }
     }
 
-    @Override
-    public BlastDoorBlockEntity createDoorBE(BlockPos pos, BlockState state) {
-        return new BlastDoorBlockEntity(pos, state);
-    }
+    override fun newBlockEntity(
+        pos: BlockPos,
+        state: BlockState
+    ): BlockEntity? = if(isController(state)) BlastDoorBlockEntity(pos, state) else null
 
-    @Override
-    public void defineParts(Builder builder) {
-        for(int x = 0; x < 6; x++) {
-            for(int y = 0; y < 3; y++) {
-                builder.define(x, y, 0);
-            }
-        }
-    }
+    override fun getShape(state: BlockState, level: BlockGetter, pos: BlockPos, context: CollisionContext): VoxelShape = SHAPE[state.getValue(FACING)]
 
-    @Override
-    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return SHAPE.get(state.getValue(FACING));
-    }
+    override val openSound: SoundEvent get() = SoundEvents.BEACON_ACTIVATE //TODO SOUND
+
+    override val closeSound: SoundEvent get() = SoundEvents.BEACON_DEACTIVATE // TODO SOUND
 }

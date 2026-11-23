@@ -1,40 +1,38 @@
-package net.liukrast.hns.world.level.block.shape;
+package net.liukrast.hns.world.level.block.shape
 
-import net.minecraft.core.Direction;
-import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.core.Direction
+import net.minecraft.world.phys.shapes.Shapes
+import net.minecraft.world.phys.shapes.VoxelShape
+import java.util.EnumMap
 
-import java.util.EnumMap;
-import java.util.Map;
+class HRShape(northShape: VoxelShape) {
 
-public class HRShape {
+    private val shapes: MutableMap<Direction, VoxelShape> = EnumMap(Direction::class.java)
 
-    private final Map<Direction, VoxelShape> shapes = new EnumMap<>(Direction.class);
-
-    public HRShape(VoxelShape northShape) {
-        shapes.put(Direction.NORTH, northShape);
-        shapes.put(Direction.EAST,  rotate(northShape, 1));
-        shapes.put(Direction.SOUTH, rotate(northShape, 2));
-        shapes.put(Direction.WEST,  rotate(northShape, 3));
+    init {
+        shapes[Direction.NORTH] = northShape
+        shapes[Direction.EAST] = rotate(northShape, 1)
+        shapes[Direction.SOUTH] = rotate(northShape, 2)
+        shapes[Direction.WEST] = rotate(northShape, 3)
     }
 
-    public VoxelShape get(Direction dir) {
-        VoxelShape shape = shapes.get(dir);
-        return shape != null ? shape : shapes.get(Direction.NORTH);
+    operator fun get(dir: Direction): VoxelShape {
+        return shapes[dir] ?: shapes.getValue(Direction.NORTH)
     }
 
-    private static VoxelShape rotate(VoxelShape shape, int times) {
-        VoxelShape[] buffer = { shape, Shapes.empty() };
+    companion object {
+        private fun rotate(shape: VoxelShape, times: Int): VoxelShape {
+            var current = shape
 
-        for (int i = 0; i < times; i++) {
-            buffer[0].forAllBoxes((x1, y1, z1, x2, y2, z2) ->
-                    buffer[1] = Shapes.or(buffer[1],
-                            Shapes.box(1 - z2, y1, x1, 1 - z1, y2, x2))
-            );
-            buffer[0] = buffer[1];
-            buffer[1] = Shapes.empty();
+            repeat(times) {
+                var next = Shapes.empty()
+                current.forAllBoxes { x1, y1, z1, x2, y2, z2 ->
+                    next = Shapes.or(next, Shapes.box(1.0 - z2, y1, x1, 1.0 - z1, y2, x2))
+                }
+                current = next
+            }
+
+            return current
         }
-
-        return buffer[0];
     }
 }
