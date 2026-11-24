@@ -22,6 +22,10 @@ class LargeDoorBlock(
         private val SHAPE = HRShape(box(0.0, 0.0, 0.0, 16.0, 16.0, 3.0))
     }
 
+    init {
+        registerDefaultState(defaultBlockState().setValue(partsProperty, 3))
+    }
+
     override fun defineParts(builder: Builder) {
         builder.apply { repeat(3) { x -> repeat(3) { y -> define(x,y,0) } } }
     }

@@ -8,7 +8,6 @@ import net.liukrast.blocknet.setting.BlockNetSetting
 import net.minecraft.core.UUIDUtil
 import net.swzo.brass.ui.kit.base.BrassAccent
 import net.swzo.brass.ui.kit.input.BrassConfirmSlider
-import net.swzo.brass.ui.kit.layout.BrassForm
 import java.util.*
 
 class KeySetting(
@@ -27,7 +26,7 @@ class KeySetting(
 
     override fun ui(context: Context<UUID>): (Result<UUID>) -> Unit {
         //TODO("Translate")
-        val box = BrassConfirmSlider("Unbind key", "Key unbound", BrassAccent.DANGER, 2f) {
+        val box = BrassConfirmSlider("Unbind key", "...", BrassAccent.DANGER, 2f) {
             context.updater(NONE)
         }.constrain {
             x = 0.pixels(); y = 0.pixels()
@@ -47,5 +46,5 @@ class KeySetting(
         else -> null
     }
 
-    override fun toNetwork(value: UUID): Any? = value.toString()
+    override fun toNetwork(value: UUID): Any = value.toString()
 }

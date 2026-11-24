@@ -16,6 +16,10 @@ class BlastDoorBlock(properties: Properties) : DoorBlock(properties) {
         private val SHAPE = HRShape(box(0.0, 0.0, 0.0, 16.0, 16.0, 7.0))
     }
 
+    init {
+        registerDefaultState(defaultBlockState().setValue(partsProperty, 6))
+    }
+
     override fun defineParts(builder: Builder) {
         builder.apply { repeat(6) { x -> repeat(3) { y -> define(x,y,0) } } }
     }
